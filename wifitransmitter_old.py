@@ -41,7 +41,7 @@ def WifiTransmitter(*args):
         level=int(args[1])
         snr=int(args[2])
     
-	## Sanity checks
+	## Sanity check
     if len(message) > 10000:
         raise Exception("Error: Message is too long")
     if level>4 or level<1:
@@ -59,13 +59,14 @@ def WifiTransmitter(*args):
         bits = np.pad(bits, (0, 2*nfft-len(bits)%(2*nfft)),'constant')
         nsym = int(len(bits)/(2*nfft))
         output = np.zeros(shape=(len(bits),))
-        
+
         for i in range(nsym):
             symbol = bits[i*2*nfft:(i+1)*2*nfft]
             output[i*2*nfft:(i+1)*2*nfft] = symbol[Interleave-1]
-            
+
         len_binary = np.array(list(np.binary_repr(length).zfill(2*nfft))).astype(np.int8)
-        output = np.concatenate((len_binary, output))
+        output = np.concatenate((len_binary, output)).astype(np.int8)
+        
     
     if level >= 2:
         coded_message = check.conv_encode(output[2*nfft:].astype(bool), cc1)
@@ -79,8 +80,8 @@ def WifiTransmitter(*args):
         nsym = int(len(output)/nfft)
         for i in range(nsym):
             symbol = output[i*nfft:(i+1)*nfft]
-            output[i*nfft:(i+1)*nfft] = np.fft.ifft(symbol)
-
+            output[i*nfft:(i+1)*nfft] = np.fft.fft(symbol)
+    
     if level >= 4:
         noise_pad_begin = np.zeros(np.random.randint(1,1000))
         noise_pad_begin_length = len(noise_pad_begin)
@@ -88,7 +89,8 @@ def WifiTransmitter(*args):
         output = np.concatenate((noise_pad_begin,output,noise_pad_end))        
         output = comm.channels.awgn(output,snr)
         return noise_pad_begin_length, output, length
-            
+
+    print("\n")
     return output
     
 if __name__ == '__main__':
