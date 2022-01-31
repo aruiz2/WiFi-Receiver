@@ -1,3 +1,4 @@
+from distutils.command.build import build
 import numpy as np
 import sys
 import commpy as comm
@@ -22,6 +23,40 @@ level3_array = np.array([(0.25+0j), 0j, (-0.33187577644799227+0.3219606341513001
     length = the length of the message
 '''
 
+def convert_to_decimal(bits):
+    n = len(bits)
+    decimal = 0
+    for i in range(n-1, -1, -1):
+        if bits[i] == 1: 
+            decimal += 2**(i)
+    return decimal
+
+def calculate_error(bits1, bits2):
+    n = len(bits1)
+    error = 0
+    for i in range(n):
+        if bits1[i] != bits2[i]: 
+            error += 1
+    return error
+
+def build_error_array(output_bits):
+    n_output_bits = len(output_bits)
+    input_bits = [0,1]
+    error_array = np.array([[[-1 for _  in range(2)] for _ in range(4)] for _ in range(n_output_bits)])
+    trellis_array = np.array([[0, 3, 2, 1], [3, 0, 1, 2]])
+    states = [[0,0], [0,1], [1,0], [1,1]]
+    number_of_states = 4
+
+    for row in range(n_output_bits):
+        curr_bits = output_bits[row]
+        for col in range(number_of_states):
+            state = states[col]
+            for input in input_bits:
+                error = calculate_error(curr_bits, state)
+                error_array[row][col][input] = error
+    
+    print(error_array)
+
 
 def WifiReceiver(*args):
     output = args[0]
@@ -31,7 +66,7 @@ def WifiReceiver(*args):
     begin_zero_padding = 0
     nfft = 64
     cc1 = check.Trellis(np.array([3]),np.array([[0o7,0o5]]))
-
+    preamble = np.array([1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1])
     '''TODO: DELETE THE OUTPUT = PART! ITS JUST FOR TESTING NOW'''
     output = level3_array
     '''DELETE THE OUTPUT = PART! ITS JUST FOR TESTING NOW'''
@@ -41,7 +76,15 @@ def WifiReceiver(*args):
 
     #Preamble Detection
     if level >= 4:
-        pass
+        '''snr input will be >= 30dB'''
+
+        '''First, find the preamble pattern'''
+        n_preamble = len(preamble)
+        n_output = len(output)
+        i_preamble = 0
+        i_output = 0
+        #while i_output < n_output - n_preamble:
+
 
     #OFDM Demod
     elif level >= 3:
@@ -53,32 +96,22 @@ def WifiReceiver(*args):
     #Turbo Decoding
     elif level >= 2:
 
-        '''
-        Trellis
-        rows = current state
-        cols = current inputs in decimal
-        elements = corresponding outputs in decimal
-
-        input bits = coded bits (the columns)
-
-              0  1
-        0    [[0 3]
-        1    [0 3]
-        2    [3 0]
-        3    [3 0]
-        4    [2 1]
-        5    [2 1]
-        6    [1 2]
-        7    [1 2]]
-        '''
-
         '''Convert complex to bits'''
         mod = comm.modulation.QAMModem(4)
         output = mod.demodulate(output, "hard")
-        print("Treilis: \n", cc1.output_table)
+        n_output = len(output)
+        generator_bits = []
+        l, r = 0, 1
 
+        while r < n_output:
+            i = output[l]
+            generator_bits.append([output[l], output[r]])
+            l += 1
+            r += 1
         
-        
+        error_array = build_error_array(generator_bits)
+
+
         '''
         Viterbi Decoding
 
