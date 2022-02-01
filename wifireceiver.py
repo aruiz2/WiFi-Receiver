@@ -4,6 +4,8 @@ import sys
 import commpy as comm
 import commpy.channelcoding.convcode as check
 
+trellis_array = np.array([[0, 3, 2, 1], [3, 0, 1, 2]]) #easier to use in my opinion than cc1
+
 #some testing arrays
 hello_array = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 count9_array = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
@@ -23,6 +25,10 @@ level3_array = np.array([(0.25+0j), 0j, (-0.33187577644799227+0.3219606341513001
     length = the length of the message
 '''
 
+'''
+Converts a list of bits, in binary, to a decimal value
+    -bits: the binary value of the decimal value we are trying to get
+'''
 def convert_to_decimal(bits):
     n = len(bits)
     decimal = 0
@@ -31,6 +37,11 @@ def convert_to_decimal(bits):
             decimal += 2**(i)
     return decimal
 
+'''
+Calculates the number of different bits between bits1 and bits2
+    -bits1: sequence of bits
+    -bits1: another sequence of bits
+'''
 def calculate_error(bits1, bits2):
     n = len(bits1)
     error = 0
@@ -39,11 +50,14 @@ def calculate_error(bits1, bits2):
             error += 1
     return error
 
+'''
+This function builds an array containing the error values of the output bits we received
+    -output_bits: the output_bits we received from the generator polynomial
+'''
 def build_error_array(output_bits):
     n_output_bits = len(output_bits)
     input_bits = [0,1]
     error_array = np.array([[[-1 for _  in range(2)] for _ in range(4)] for _ in range(n_output_bits)])
-    trellis_array = np.array([[0, 3, 2, 1], [3, 0, 1, 2]])
     states = [[0,0], [0,1], [1,0], [1,1]]
     number_of_states = 4
 
@@ -55,15 +69,101 @@ def build_error_array(output_bits):
                 error = calculate_error(curr_bits, state)
                 error_array[row][col][input] = error
     
-    print(error_array)
+    return error_array
+
+'''
+This function gets the previous path given a current state and time
+    -paths_tracker: our data structure where we store all the paths
+    -r: current time we are at
+    -c: current state we are at
+'''
+def get_prev_sequence(paths_tracker, r, c):
+
+    #Get the paths
+    c_prev0 = trellis_array[c][0]
+    c_prev1 = trellis_array[c][1]
+    prev_path0 = paths_tracker[r-1][c_prev0] if c_prev0 in paths_tracker[r-1] else []
+    prev_path1 = paths_tracker[r-1][c_prev1] if c_prev1 in paths_tracker[r-1] else []
+    
+
+    #Put the paths in an array
+    paths = []
+    for path in [prev_path0, prev_path1]: paths.append(path)
+    n_paths = len(paths)
+    #paths = [ [{'path': length}], [{'path': length}] ]
+    
+    min_paths = []
+    for i in range(n_paths):
+        path_dict = paths[i]
+        min_error = float("infinity")
+
+        for path_string, error in path_dict:
+
+            if error < min_error:
+                min_error = error
+                min_paths = [path_string]
+
+            elif error == min_error:
+                min_paths.append(path)
+
+    return min_paths
 
 
+'''
+This function adds a bit to the paths contained in the list prev_sequence
+    -prev_sequence: array containing strings of previous paths
+    -bit: the bit to add to each sequence in prev_sequences
+'''
+def build_new_path(prev_sequence, bit):
+    n_prev_sequence = len(prev_sequence)
+    for i in range(n_prev_sequence):
+        prev_sequence[i] = prev_sequence[i] + str(bit)
+    return prev_sequence
+
+'''
+This function performs the Viterbi algorithm with the help of helper functions
+    -error_array: array that contains the weight of each path
+'''
+def viterbi_solver(error_array):
+    
+    '''
+    error_arrray = 
+    [
+        [
+            [error0, error1], [error0, error1], [error0, error1], [error0, error1]
+            ]
+    ]
+    '''
+    rows = len(error_array)
+    cols = 4 #number of states
+    bits = [0,1]
+    paths_tracker = [[{} for _ in range(cols)] for _ in range(rows)]
+
+    for r in range(rows):
+        for c in range(cols):
+            min_error_path = float("inf")
+            min_error_bit = -1
+            same_error = False
+
+            for bit in bits:
+                curr_error = error_array[r][c][bit]
+
+                #We also need the prev_sequence_error
+                prev_sequence = get_prev_sequence(paths_tracker, r, c)
+                prev_sequence_error = 
+                
+                new_path = build_new_path(prev_sequence, bit)
+                paths_tracker[r][c][bit] = new_path
+            
+            #after we are done building the paths for 0 and 1 we only keep the best path
+
+            
 def WifiReceiver(*args):
     output = args[0]
     level = int(args[1])
     length = 0
     message = ""
-    begin_zero_padding = 0
+    begin_zero_padding = 0      
     nfft = 64
     cc1 = check.Trellis(np.array([3]),np.array([[0o7,0o5]]))
     preamble = np.array([1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1])
@@ -110,17 +210,7 @@ def WifiReceiver(*args):
             r += 1
         
         error_array = build_error_array(generator_bits)
-
-
-        '''
-        Viterbi Decoding
-
-        Output code bits:
-        c1(n) = i(n) xor i(n-1) xor i(n-2)
-        c2(n) = i(n) xor i(n-2)
-        
-        '''
-
+        output = viterbi_solver(error_array)
 
     #De-interleaving
     elif level >= 1:
