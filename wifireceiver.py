@@ -4,9 +4,15 @@ import sys
 import commpy as comm
 import commpy.channelcoding.convcode as check
 import time
-from viterbi import *
-from helper_functions import *
+import viterbi
+import build_error_array as berror
 
+''''
+The trellis arrray is made of 2 rows and 4 cols.
+    - The rows indicate the input being 0 or 1.
+    - The cols refer to the current states.
+    - The elements of the array represent the output given current state and current input
+'''
 trellis_array = np.array([[0, 3, 2, 1], [3, 0, 1, 2]]) #easier to use in my opinion than cc1
 
 #some testing arrays
@@ -62,7 +68,7 @@ def WifiReceiver(*args):
         mod = comm.modulation.QAMModem(4)
         output = mod.demodulate(output, "hard")
         #TODO: REMOVE THE OUTPUT = [X, X, ...] LINE
-        output = [1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1]
+        output = np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1])
         n_output = len(output)
         generator_bits = []
         l, r = 0, 1
@@ -73,9 +79,11 @@ def WifiReceiver(*args):
             l += 2
             r += 2
         
-        error_array = build_error_array(generator_bits)
+        error_array = berror.build_error_array(generator_bits)
         #print("error_array: \n", error_array, "\n")
-        output = viterbi_solver(error_array)
+        output_ref = check.viterbi_decode(output, cc1)
+        print("viterbi solver should return : ", output_ref, "\n")
+        output = viterbi.viterbi_solver(error_array)
 
     #De-interleaving
     elif level >= 1:

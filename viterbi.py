@@ -30,17 +30,13 @@ def build_new_path(prev_sequence, bit):
     n_prev_sequence = len(prev_sequence)
     new_paths_list = []
 
-    #print("prev_sequence:", prev_sequence)
     for i in range(n_prev_sequence):
         path_dict = prev_sequence[i]
         new_path_dict = {}
         for path_string in path_dict.keys():
-            #print("path_string:"+ path_string)
             new_path_dict[path_string + str(bit)] = path_dict[path_string]
             new_paths_list.append(new_path_dict)
     
-    #print("new_paths_list: ", new_paths_list)
-    #print("\n")
     return new_paths_list
 
 '''
@@ -102,16 +98,17 @@ def viterbi_solver(error_array):
     bits = [0,1]
     paths_tracker = np.array([[{} for _ in range(cols)] for _ in range(rows + 1)]) #need extra row for base cases
     for c in range(cols): paths_tracker[0][c][""] = 0
-    
     #r loops through time
     for r in range(1, rows+1):
         #c loops through states
         for c in range(cols):
             #print(r, c)
             min_error_path = float("inf")
+            new_paths = []
 
             for bit in bits:
-                prev_sequence = get_prev_sequence(paths_tracker, r, c, bit)
+                prev_r, prev_c = r-1, find_prev_state_trellis(c, bit)  #prev_time, prev_state
+                prev_sequence = get_prev_sequence(paths_tracker, prev_r, prev_c, bit)
                 curr_error = error_array[r-1][c][bit]
                 new_paths = build_new_path(prev_sequence, bit)
                 #print("new_paths: ", new_paths, "\n\n")
@@ -125,7 +122,9 @@ def viterbi_solver(error_array):
 
             #Delete any path that has bigger errors than min_error path
             delete_paths(paths_tracker[r][c], min_error_path)
-    print("paths_tracker_last_row: \n", paths_tracker[r][c])
+    print(paths_tracker)
+    
+    #print("paths_tracker_last_row: \n", paths_tracker[r][c])
 
     '''
     Still need to implement the part to calculate min distance
