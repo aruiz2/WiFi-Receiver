@@ -22,111 +22,78 @@ def find_prev_state_trellis(state, input):
         return 0
 
 '''
-This function returns a list of dictionaries containing new paths with their previous error
-    -prev_sequence: array containing strings of previous paths
-    -bit: the bit to add to each sequence in prev_sequences
-'''
-def build_new_path(prev_sequence, bit):
-    n_prev_sequence = len(prev_sequence)
-    new_paths_list = []
-
-    for i in range(n_prev_sequence):
-        path_dict = prev_sequence[i]
-        new_path_dict = {}
-        for path_string in path_dict.keys():
-            new_path_dict[path_string + str(bit)] = path_dict[path_string]
-            new_paths_list.append(new_path_dict)
-    
-    return new_paths_list
-
-'''
-This function returns a list with a dict of previous paths and errors
-    -paths_tracker: our data structure where we store all the paths
-    -r: current time we are at
-    -c: current state we are at
-'''
-def get_prev_sequence(paths_tracker, r, c, input):
-    '''c_prev0 is the state prior to current backtracking with input of 0'''
-
-    #Get the paths
-    c_prev0 = find_prev_state_trellis(c, input)
-    c_prev1 = find_prev_state_trellis(c, input)
-    prev_path0 = paths_tracker[r-1][c_prev0]
-    prev_path1 = paths_tracker[r-1][c_prev1] #= [{'PATH1': error}, {'PATH1': error}]
-    
-    paths = []
-    min_error = float("infinity")
-    
-    #add all the paths with their error to our list 'paths'
-    for prev_path in [prev_path0, prev_path1]:
-        for path, error in prev_path.items():
-            path_dict = {path: error}
-            min_error = min(min_error, error)
-            paths.append(path_dict)
-    
-    #delete the paths with error > min_path
-    n_paths = len(paths)
-    for i in range(n_paths):
-        path_dict = paths[i]
-        for path, error in path_dict.items():
-            if error > min_error:
-                paths.pop(i)
-        
-    return paths
-
-'''
-This function deletes any paths being stored that have a total error greater than the min_error
-    -paths_dict: the dictionary containing the paths with its erros
+This function deletes the input 0 or 1 depending on which has a max total error path
+    -inputs_dict: the dictionary containing the inputs with its path errors
     -min_error: the error threshold value
 '''
-def delete_paths(paths_dict, min_error):
-    for path in list(paths_dict.keys()):
-        error = paths_dict[path]
+def delete_max_error_input(inputs_dict, min_error):
+    for input in list(inputs_dict.keys()):
+        error = inputs_dict[input]
         if (error > min_error):
-            del paths_dict[path]
+            del inputs_dict[input]
         
     return
-'''
 
+'''
+This function will traceback through our input tracker and calculate all possible paths.
+It will create a dictionary matching each path with its error value.
+    -input_tracker: our data structure containing the inputs that lead to less error
+'''
+def build_path(input_tracker, s, r, path_error, path_bits, paths):
+    #TODO: CHECK WE DONT GET EQUAL ERRORED PATHS
+    if (r < 1): 
+        paths[path_error] = path_bits
+        return
+    
+    states, n_states = [0, 1, 2, 3], 4
+    input_dict = input_tracker[r][s]
+
+    for bit, path_error in input_dict.items():
+        #recover the input bits
+        curr_error = input_tracker[r][s][bit]
+        path_error += curr_error
+        path_bits.append(bit)
+        build_path(input_tracker, s, r-1, path_error, path_bits, paths)
+    
+'''
 This function performs the Viterbi algorithm with the help of helper functions
     -error_array: array that contains the weight of each path
 '''
-def viterbi_solver(error_array):
+def viterbi_solver(error_array, n_generator_bits):
     
-    rows = len(error_array)
+    rows = n_generator_bits
     cols = 4 #number of states
     bits = [0,1]
-    paths_tracker = np.array([[{} for _ in range(cols)] for _ in range(rows + 1)]) #need extra row for base cases
-    for c in range(cols): paths_tracker[0][c][""] = 0
+    input_tracker = np.array([[{} for _ in range(cols)] for _ in range(rows + 1)]) #need extra row for base cases
+    for c in range(cols): input_tracker[0][c][""] = 0
+
+    #1. Calculate min paths to each state at the last time
     #r loops through time
     for r in range(1, rows+1):
+
         #c loops through states
         for c in range(cols):
-            #print(r, c)
-            min_error_path = float("inf")
+            min_error_input = float("inf")
             new_paths = []
 
             for bit in bits:
                 prev_r, prev_c = r-1, find_prev_state_trellis(c, bit)  #prev_time, prev_state
-                prev_sequence = get_prev_sequence(paths_tracker, prev_r, prev_c, bit)
-                curr_error = error_array[r-1][c][bit]
-                new_paths = build_new_path(prev_sequence, bit)
-                #print("new_paths: ", new_paths, "\n\n")
+                prev_error = list(input_tracker[prev_r][prev_c].values())[0]
+                curr_error = error_array[r-1][prev_c][bit]
 
-                #Add the new paths to our tracker with their new error value
-                for path_dict in new_paths:
-                    for path, error in path_dict.items():
-                        new_error = curr_error + error
-                        paths_tracker[r][c][path] = new_error
-                        min_error_path = min(min_error_path, new_error)
+                #Store in paths_tracker[r][c] the new error for the current bit
+                input_tracker[r][c][bit] = prev_error + curr_error
+                min_error_input = min(min_error_input, curr_error + prev_error)
 
-            #Delete any path that has bigger errors than min_error path
-            delete_paths(paths_tracker[r][c], min_error_path)
-    print(paths_tracker)
+            #Check if input 0 or 1 leads to less error and delete input with max total error
+            delete_max_error_input(input_tracker[r][c], min_error_input)
     
-    #print("paths_tracker_last_row: \n", paths_tracker[r][c])
-
-    '''
-    Still need to implement the part to calculate min distance
-    '''
+    #2. Traceback to get all possible paths with its output error
+    curr_state, states, paths = 0, [0, 1, 2, 3], {}
+    for state in states:
+        input_bits, path_error, curr_row = [], 0, rows - 1
+        build_path(input_tracker, curr_state, curr_row, path_error, input_bits, paths)
     
+    #3. Return the path with the minimum error
+    min_error = min(list(paths.keys()))
+    return np.array(paths[min_error])

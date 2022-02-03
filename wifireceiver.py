@@ -68,9 +68,9 @@ def WifiReceiver(*args):
         mod = comm.modulation.QAMModem(4)
         output = mod.demodulate(output, "hard")
         #TODO: REMOVE THE OUTPUT = [X, X, ...] LINE
-        output = np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1])
+        output = np.array([1, 0, 0, 1, 1, 0, 0, 1]) 
         n_output = len(output)
-        generator_bits = []
+        generator_bits, n_generator_bits = [], 0
         l, r = 0, 1
 
         while r < n_output:
@@ -78,12 +78,12 @@ def WifiReceiver(*args):
             generator_bits.append([output[l], output[r]])
             l += 2
             r += 2
+            n_generator_bits += 1
         
         error_array = berror.build_error_array(generator_bits)
-        #print("error_array: \n", error_array, "\n")
-        output_ref = check.viterbi_decode(output, cc1)
-        print("viterbi solver should return : ", output_ref, "\n")
-        output = viterbi.viterbi_solver(error_array)
+        print("viterbi solver should return : ", check.viterbi_decode(output, cc1), "\n")
+        output = viterbi.viterbi_solver(error_array, n_generator_bits)
+        print("our viterbi solver got:", output)
 
     #De-interleaving
     elif level >= 1:
