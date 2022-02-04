@@ -30,8 +30,7 @@ def delete_max_error_input(inputs_dict, min_error):
     for input in list(inputs_dict.keys()):
         error = inputs_dict[input]
         if (error > min_error):
-            del inputs_dict[input]
-        
+            del inputs_dict[input]       
     return
 
 '''
@@ -45,22 +44,27 @@ def build_path(input_tracker, s, r, path_error, path_bits, paths):
         paths[path_error] = path_bits
         return
     
-    states, n_states = [0, 1, 2, 3], 4
     input_dict = input_tracker[r][s]
-
+    
     for bit, path_error in input_dict.items():
-        #recover the input bits
+        #1. Recover the input bit
         curr_error = input_tracker[r][s][bit]
-        path_error += curr_error
         path_bits.append(bit)
-        build_path(input_tracker, s, r-1, path_error, path_bits, paths)
+        print(r, path_bits)
+        build_path(input_tracker, s, r-1, path_error + curr_error, path_bits.copy(), paths)
+
+        #2. Update for next bit
+        path_bits.pop()
+
+    print("\n")
     
 '''
 This function performs the Viterbi algorithm with the help of helper functions
     -error_array: array that contains the weight of each path
+    -n_generator_bits: how many bits we have
 '''
 def viterbi_solver(error_array, n_generator_bits):
-    
+
     rows = n_generator_bits
     cols = 4 #number of states
     bits = [0,1]
@@ -79,21 +83,25 @@ def viterbi_solver(error_array, n_generator_bits):
             for bit in bits:
                 prev_r, prev_c = r-1, find_prev_state_trellis(c, bit)  #prev_time, prev_state
                 prev_error = list(input_tracker[prev_r][prev_c].values())[0]
-                curr_error = error_array[r-1][prev_c][bit]
 
-                #Store in paths_tracker[r][c] the new error for the current bit
-                input_tracker[r][c][bit] = prev_error + curr_error
-                min_error_input = min(min_error_input, curr_error + prev_error)
+                curr_error = error_array[r-1][prev_c][bit]
+                cumulative_error = prev_error + curr_error
+
+                input_tracker[r][c][bit] = cumulative_error
+                min_error_input = min(min_error_input, cumulative_error)
 
             #Check if input 0 or 1 leads to less error and delete input with max total error
+            if (r == 1): print(input_tracker[1])
             delete_max_error_input(input_tracker[r][c], min_error_input)
-    
+
     #2. Traceback to get all possible paths with its output error
+    #print(input_tracker)
     curr_state, states, paths = 0, [0, 1, 2, 3], {}
     for state in states:
-        input_bits, path_error, curr_row = [], 0, rows - 1
+        input_bits, path_error, curr_row = [], 0, rows
         build_path(input_tracker, curr_state, curr_row, path_error, input_bits, paths)
     
     #3. Return the path with the minimum error
+    print(paths)
     min_error = min(list(paths.keys()))
     return np.array(paths[min_error])

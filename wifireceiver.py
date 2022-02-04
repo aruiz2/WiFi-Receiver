@@ -68,7 +68,7 @@ def WifiReceiver(*args):
         mod = comm.modulation.QAMModem(4)
         output = mod.demodulate(output, "hard")
         #TODO: REMOVE THE OUTPUT = [X, X, ...] LINE
-        output = np.array([1, 0, 0, 1, 1, 0, 0, 1]) 
+        output = np.array([1, 0, 0, 1, 1, 1, 0, 1]) 
         n_output = len(output)
         generator_bits, n_generator_bits = [], 0
         l, r = 0, 1
