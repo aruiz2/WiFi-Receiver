@@ -1,3 +1,4 @@
+from copy import error
 from distutils.command.build import build
 import numpy as np
 import sys
@@ -8,12 +9,16 @@ import viterbi
 import build_error_array as berror
 
 ''''
-The trellis arrray is made of 2 rows and 4 cols.
-    - The rows indicate the input being 0 or 1.
-    - The cols refer to the current states.
-    - The elements of the array represent the output given current state and current input
+The trellis arrray is made of 4 rows and 4 cols.
+    - The rows indicate the current state 
+    - The cols refer to the previous states.
+    - The elements of the array represent the output given current state and prev_state input
 '''
-trellis_array = np.array([[0, 3, 2, 1], [3, 0, 1, 2]]) #easier to use in my opinion than cc1
+na = -1         
+trellis_array = np.array([ [[0], [na], [3], [na]],
+                            [[3], [na], [0], [na]],
+                            [[na], [2], [na], [1]],
+                            [[na], [1], [na], [2]]])
 
 #some testing arrays
 hello_array = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
@@ -80,6 +85,7 @@ def WifiReceiver(*args):
             r += 2
             n_generator_bits += 1
         
+        print(generator_bits)
         error_array = berror.build_error_array(generator_bits)
         print("viterbi solver should return : ", check.viterbi_decode(output, cc1), "\n")
         output = viterbi.viterbi_solver(error_array, n_generator_bits)
