@@ -72,6 +72,7 @@ def build_path(input_tracker, s, r, path_error, path_bits, paths):
     for prev_state, path_error in input_dict.items():
         #1. Recover the input bit
         curr_error = input_tracker[r][s][prev_state]
+        if (r == 2): print(prev_state)
         bit = find_input_bit_based_on_state(prev_state)
         path_bits.append(bit)
         build_path(input_tracker, prev_state, r-1, path_error + curr_error, path_bits.copy(), paths)
@@ -101,8 +102,6 @@ def viterbi_solver(error_array, n_generator_bits):
         for c in range(cols):
             min_error_input, min_error_prev_state_list = float("inf"), []
             new_paths = []
-            
-
             prev_r, prev_c_list = r-1, find_prev_state_trellis(c)  #prev_time, prev_state
 
             #loop through previous states
@@ -128,6 +127,7 @@ def viterbi_solver(error_array, n_generator_bits):
     print(input_tracker)
     #2. Traceback to get all possible paths with its output error
     curr_state, states, paths = 0, [0, 1, 2, 3], {}
+    print("\noutput for build path begins now\n")
     for state in states:
         input_bits, path_error, curr_row = [], 0, rows
         build_path(input_tracker, curr_state, curr_row, path_error, input_bits, paths)

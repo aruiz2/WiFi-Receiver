@@ -44,20 +44,29 @@ def WifiReceiver(*args):
     output = level3_array
     '''DELETE THE OUTPUT = PART! ITS JUST FOR TESTING NOW'''
 
-
+    
     #TODO: CHANGE ELIFS TO IF STATEMENTS
 
     #Preamble Detection
     if level >= 4:
+        output = np.array([0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1])
         '''snr input will be >= 30dB'''
-
         '''First, find the preamble pattern'''
-        n_preamble = len(preamble)
+
+        print("preamble: \n",preamble)
+        n_preamble = preamble.size
         n_output = len(output)
         i_preamble = 0
-        i_output = 0
-        #while i_output < n_output - n_preamble:
+        while (True):
+            #preamble starts with 1, skip over 0s
+            while output[i_preamble] == 0: 
+                i_preamble += 1
+            #check if they are equal
+            if np.array_equal(output[i_preamble:i_preamble + n_preamble], preamble): 
+                break
+            i_preamble += 1
 
+        begin_zero_padding = i_preamble
 
     #OFDM Demod
     elif level >= 3:
