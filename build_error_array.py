@@ -36,5 +36,4 @@ def build_error_array(output_bits):
                 possible_output_bits = c_util.dec2bitarray(wr.trellis_array[state_decimal][prev_state], bit_width)
                 error = comm.utilities.hamming_dist(curr_bits, possible_output_bits)
                 error_array[row][col][prev_state] = error 
-    print(error_array)
     return error_array

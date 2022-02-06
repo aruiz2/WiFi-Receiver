@@ -82,7 +82,7 @@ def WifiReceiver(*args):
         mod = comm.modulation.QAMModem(4)
         output = mod.demodulate(output, "hard")
         #TODO: REMOVE THE OUTPUT = [X, X, ...] LINE
-        output = np.array([1, 0, 0, 1, 1, 1, 0, 1]) 
+        output = np.array([0, 0, 1, 1, 1, 0]) 
         n_output = len(output)
         generator_bits, n_generator_bits = [], 0
         l, r = 0, 1
@@ -94,7 +94,6 @@ def WifiReceiver(*args):
             r += 2
             n_generator_bits += 1
         
-        print(generator_bits)
         error_array = berror.build_error_array(generator_bits)
         print("viterbi solver should return : ", check.viterbi_decode(output, cc1), "\n")
         output = viterbi.viterbi_solver(error_array, n_generator_bits)
