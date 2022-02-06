@@ -61,7 +61,7 @@ def build_path(input_tracker, s, r, path_bits, store_path):
     input_dict = input_tracker[r][s] #{prev_state: error}
     
     for prev_state, path_error in input_dict.items():
-        bit = find_input_bit_based_on_state(prev_state)
+        bit = find_input_bit_based_on_state(s)
         path_bits.append(bit)
         build_path(input_tracker, prev_state, r-1, path_bits, store_path )
 '''
@@ -70,12 +70,17 @@ This function gets the minimum error from all the possible paths
     -states: an array containing the possible states
 '''
 def get_state_with_min_path(paths, states):
+    #get min_error
     min_error = float("infinity")
     for state in states:
         min_error = min(min_error, list(paths[state].values())[0])
-    
+
     n_states = len(states)
+    state = -1
+
+    #find state with min_error
     for state_dict in paths:
+        state += 1
         for prev_state, error in state_dict.items():
             if error == min_error:
                 return state
@@ -94,7 +99,6 @@ def viterbi_solver(error_array, n_generator_bits):
 
     #Initialize input_tracker
     input_tracker = initialize_input_tracker(rows, cols)
-
     #1. Calculate min paths to each state at the last time
     #r loops through time
     for r in range(1, rows+1):
@@ -108,6 +112,7 @@ def viterbi_solver(error_array, n_generator_bits):
             for prev_c in prev_c_list:
                 prev_error = list(input_tracker[prev_r][prev_c].values())[0]
                 curr_error = int(error_array[r-1][c][prev_c])
+                if (r == 13 and c == 1 and prev_c == 2): print(prev_error, curr_error)
                 cumulative_error = prev_error + curr_error
 
                 if cumulative_error <= min_error_input:
@@ -116,10 +121,9 @@ def viterbi_solver(error_array, n_generator_bits):
             
             for min_error_prev_state in min_error_prev_state_list:
                 input_tracker[r][c][min_error_prev_state] = int(min_error_input) if min_error_input != float("inf") else min_error_input
-    
 
     #Get min_error_path value
-    state_with_min_path = get_state_with_min_path(input_tracker[rows-1], states)
+    state_with_min_path = get_state_with_min_path(input_tracker[rows], states)
     store_path = {}
     input_bits = build_path(input_tracker, state_with_min_path, rows, [], store_path)
     return store_path["input_bits"]
