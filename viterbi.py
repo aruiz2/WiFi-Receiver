@@ -53,17 +53,20 @@ It will create a dictionary matching each path with its error value.
     -input_tracker: our data structure containing the inputs that lead to less error
 '''
 def build_path(input_tracker, s, r, path_bits, store_path):
-    if (r < 1): 
-        path_bits = np.flip(np.array(path_bits))
-        store_path["input_bits"] = path_bits
-        return
-    
-    input_dict = input_tracker[r][s] #{prev_state: error}
-    
-    for prev_state, path_error in input_dict.items():
-        bit = find_input_bit_based_on_state(s)
-        path_bits.append(bit)
-        build_path(input_tracker, prev_state, r-1, path_bits, store_path )
+
+    stack = [[input_tracker, s, r, path_bits, store_path]] 
+    while stack:
+        input_tracker , s, r, path_bits, store_path = stack.pop()
+        if (r < 1):
+            path_bits = np.flip(np.array(path_bits))
+            store_path["input_bits"] = path_bits
+            return
+        
+        input_dict = input_tracker[r][s]
+        for prev_state, path_error in input_dict.items():
+            bit = find_input_bit_based_on_state(s)
+            path_bits.append(bit)
+            stack.append([input_tracker, prev_state, r-1, path_bits, store_path])
 '''
 This function gets the minimum error from all the possible paths
     -paths: list containing dictionaries where it tells us the prev state matched to the path error
@@ -112,7 +115,6 @@ def viterbi_solver(error_array, n_generator_bits):
             for prev_c in prev_c_list:
                 prev_error = list(input_tracker[prev_r][prev_c].values())[0]
                 curr_error = int(error_array[r-1][c][prev_c])
-                if (r == 13 and c == 1 and prev_c == 2): print(prev_error, curr_error)
                 cumulative_error = prev_error + curr_error
 
                 if cumulative_error <= min_error_input:
