@@ -55,14 +55,9 @@ def WifiReceiver(*args):
 
     #Preamble Detection
     if level >= 4:
-        '''First, find the preamble pattern (this works)'''
         n_output = len(output)
         i_preamble = find_preamble(output, n_output)
         begin_zero_padding = i_preamble
-        print(output)
-        print("detected noise_pad_begin value of", i_preamble)
-
-        '''Second, detect where the message ends'''
 
     #OFDM Demod
     '''Need to remove the extra 0s that I have and'''
@@ -82,11 +77,25 @@ def WifiReceiver(*args):
         #output = np.array([1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0,    0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1])
         #TODO: REMOVE TEH OUTPUT = [X, X, ...] LINE
         generator_bits, n_generator_bits = [], 0
-        l, r = 128, 129
 
-        '''Remove the preamble bits, so that we only have the output bits'''
-        output = output[begin_zero_padding + n_preamble:]
+        '''Remove the preamble bits, and initial padding'''
+        output = output[begin_zero_padding + n_preamble:] #removes initial padding and preamble
+
+        'Get length of message and remove len_binary array'
+        start_length_bit = 113
+        n_row = start_length_bit + 15 #because upper bound is not inclusive
+        for i in range(start_length_bit, n_row):
+            bit = output[i]
+            if bit == 1:
+                binary_index = n_row - (i + 1)
+                length += 2**(binary_index)
+
+        print("length", length)
+        output = output[128:] #since len_binary is length of 128 bits
+
+        #get the generator bits
         n_output = output.size
+        l, r = 0, 1
         while r < n_output:
             i = output[l]
             generator_bits.append([output[l], output[r]])
@@ -94,16 +103,20 @@ def WifiReceiver(*args):
             r += 2
             n_generator_bits += 1
 
-        encoded_message_index = begin_zero_padding + 128 #128 is the length of len_binary
+        '''Decode the input array'''
         error_array = berror.build_error_array(generator_bits)
-        reference_output = check.viterbi_decode(output[encoded_message_index:], cc1)
+        reference_output = check.viterbi_decode(output, cc1)
         input_bits = viterbi.viterbi_solver(error_array, n_generator_bits)
         check_viterbi_works(input_bits, reference_output)
-        output = np.concatenate((output[begin_zero_padding:encoded_message_index], input_bits))
+        output = input_bits
+
+        '''Remove the final padding since we know the length of the message'''
+        #Since one character = 8 bits, our message will have length*8 bits
+        padded_zeros_to_message = 2*nfft-len(input_bits)%(2*nfft);
+        output = output[:length*8 + padded_zeros_to_message]
 
     #De-interleaving
     if level >= 1:
-        print_array(output.astype(np.int8))
         '''
         Intially the bits are going to be padding of0s.
         len_binary :128 bits
@@ -112,34 +125,25 @@ def WifiReceiver(*args):
         '''
         Interleave = np.reshape(np.transpose(np.reshape(np.arange(1, 2*nfft+1, 1),[-1,4])),[-1,])
         
-        #TODO: delete begin_zero_padding = 10
-        start_length_bit = 113 + begin_zero_padding
-        n = len(output)
-        n_row = start_length_bit + 15 #because upper bound is not inclusive
-        bits = np.zeros(n - n_row)
+        n = output.size
+        bits = np.zeros(n) #input bits = length array - length of len_binary
 
-        'get length of message'
-        for i in range(start_length_bit, n_row):
-            bit = output[i]
-            if bit == 1:
-                binary_index = n_row - (i + 1)
-                length += 2**(binary_index)
-    
-        print("length", length)
-        'get the message'
-        encoded_message = output[n_row:]
-        n_encoded = encoded_message.size
+        '1. get the message'
+        encoded_message = output
+        n_encoded = encoded_message.size 
         n_interleave = Interleave.size
+        nsym = int(len(bits)/(2*nfft))
+        row_length = 2*nfft
+        print('nsym receiver', nsym)
 
-        for row in range(0, n_encoded, n_row):
-            output_row = encoded_message[row:row+n_row]
-            for i in range(n_interleave):
-                col = (Interleave - 1)[i]
+        for r in range(nsym):
+            for c in range(n_interleave):
+                row_index = (Interleave - 1)[c]
                 #print("\nbits index:", n_row*row + col, "\nrow*n_row + i:", row*n_row + i)
-                bits[n_row*row + col] = output_row[row*n_row + i]
+                bits[r*row_length + row_index] = output[r*row_length + c]
 
-
-        'decode the message'
+        print(bits)
+        '2. decode the message'
         n_bits = len(bits)
         bits_per_num = 8
         ascii_values = np.zeros((n_bits//bits_per_num,), dtype = int)
@@ -148,6 +152,7 @@ def WifiReceiver(*args):
         for start in range(0, n_bits, bits_per_num):
             num = 0
             for i in range(bits_per_num):
+
                 bit = bits[start + i]
                 if (bit == 1):
                     exp =  (bits_per_num - 1) - (i % bits_per_num)
@@ -159,7 +164,7 @@ def WifiReceiver(*args):
         for num in ascii_values:
             message += chr(num)
 
-    print(message + ",", length)
+    print(begin_zero_padding , "," + message + ",", length)
     
     return begin_zero_padding, message, length
 

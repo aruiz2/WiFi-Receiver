@@ -12,5 +12,5 @@ reference_array = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 # wr.WifiReceiver(txsignal, 4)
 
 #Level3 test
-txsignal = wt.WifiTransmitter("abcedefg", 2)
+txsignal = wt.WifiTransmitter("caca de vaca jajaj xd xd xd", 2)
 wr.WifiReceiver(txsignal, 2)

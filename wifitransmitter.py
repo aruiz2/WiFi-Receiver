@@ -59,7 +59,7 @@ def WifiTransmitter(*args):
         bits = np.pad(bits, (0, 2*nfft-len(bits)%(2*nfft)),'constant')
         nsym = int(len(bits)/(2*nfft))
         output = np.zeros(shape=(len(bits),))
-        
+
         for i in range(nsym):
             symbol = bits[i*2*nfft:(i+1)*2*nfft]
             output[i*2*nfft:(i+1)*2*nfft] = symbol[Interleave-1]
@@ -83,8 +83,6 @@ def WifiTransmitter(*args):
             output[i*nfft:(i+1)*nfft] = np.fft.ifft(symbol)
 
     if level >= 4:
-        #TODO: CHANGE BACK THE ZEROS TO RANDOM
-        #np.random.randint(1,1000)
         noise_pad_begin = np.zeros(np.random.randint(1,1000))
         noise_pad_begin_length = len(noise_pad_begin)
         noise_pad_end = np.zeros(np.random.randint(1,1000))
