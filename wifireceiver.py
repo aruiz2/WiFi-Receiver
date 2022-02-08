@@ -55,11 +55,14 @@ def WifiReceiver(*args):
 
     #Preamble Detection
     if level >= 4:
-        '''First, find the preamble pattern'''
+        '''First, find the preamble pattern (this works)'''
         n_output = len(output)
         i_preamble = find_preamble(output, n_output)
-        print("detected noise_pad_begin value of", i_preamble)
         begin_zero_padding = i_preamble
+        print(output)
+        print("detected noise_pad_begin value of", i_preamble)
+
+        '''Second, detect where the message ends'''
 
     #OFDM Demod
     '''Need to remove the extra 0s that I have and'''
@@ -79,7 +82,7 @@ def WifiReceiver(*args):
         #output = np.array([1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0,    0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1])
         #TODO: REMOVE TEH OUTPUT = [X, X, ...] LINE
         generator_bits, n_generator_bits = [], 0
-        l, r = 0, 1
+        l, r = 128, 129
 
         '''Remove the preamble bits, so that we only have the output bits'''
         output = output[begin_zero_padding + n_preamble:]
@@ -90,12 +93,13 @@ def WifiReceiver(*args):
             l += 2
             r += 2
             n_generator_bits += 1
-    
-        error_array = berror.build_error_array(generator_bits)
-        reference_output = check.viterbi_decode(output, cc1)
-        output = viterbi.viterbi_solver(error_array, n_generator_bits)
 
-        check_viterbi_works(output, reference_output)
+        encoded_message_index = begin_zero_padding + 128 #128 is the length of len_binary
+        error_array = berror.build_error_array(generator_bits)
+        reference_output = check.viterbi_decode(output[encoded_message_index:], cc1)
+        input_bits = viterbi.viterbi_solver(error_array, n_generator_bits)
+        check_viterbi_works(input_bits, reference_output)
+        output = np.concatenate((output[begin_zero_padding:encoded_message_index], input_bits))
 
     #De-interleaving
     if level >= 1:
