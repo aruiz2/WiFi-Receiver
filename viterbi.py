@@ -53,7 +53,6 @@ It will create a dictionary matching each path with its error value.
     -input_tracker: our data structure containing the inputs that lead to less error
 '''
 def build_path(input_tracker, s, r, path_bits, store_path):
-
     stack = [[input_tracker, s, r, path_bits, store_path]] 
     while stack:
         input_tracker , s, r, path_bits, store_path = stack.pop()

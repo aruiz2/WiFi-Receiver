@@ -9,6 +9,7 @@ import viterbi
 import build_error_array as berror
 from wifitransmitter import print_array
 from wifitransmitter import WifiTransmitter
+from preamble_detect import find_preamble
 
 ''''
 The trellis arrray is made of 4 rows and 4 cols.
@@ -48,15 +49,9 @@ def WifiReceiver(*args):
         '''First, find the preamble pattern'''
         n_preamble = preamble.size
         n_output = len(output)
-        i_preamble = 0
-
-        #preamble starts with 1, skip over 0s
-        while output[i_preamble] == 0:
-            i_preamble += 1
-        begin_zero_padding = i_preamble
-
-        #message ends when 
+        i_preamble = find_preamble(output, n_output)
         print("detected noise_pad_begin value of", i_preamble)
+        begin_zero_padding = i_preamble
 
     #OFDM Demod
     '''Need to remove the extra 0s that I have and'''
@@ -97,9 +92,11 @@ def WifiReceiver(*args):
             bits: [113, 127]
         '''
         Interleave = np.reshape(np.transpose(np.reshape(np.arange(1, 2*nfft+1, 1),[-1,4])),[-1,])
-        start_length_bit = 113
+        
+        #TODO: delete begin_zero_padding = 10
+        start_length_bit = 113 + begin_zero_padding
         n = len(output)
-        n_row = 128
+        n_row = 128 + begin_zero_padding
         bits = np.zeros(n - 128)
 
         'get length of message'
@@ -108,6 +105,8 @@ def WifiReceiver(*args):
             if bit == 1:
                 binary_index = n_row - (i + 1)
                 length += 2**(binary_index)
+
+        print(length)
     
         'get the message'
         encoded_message = output[n_row:]

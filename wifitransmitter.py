@@ -66,7 +66,6 @@ def WifiTransmitter(*args):
             
         len_binary = np.array(list(np.binary_repr(length).zfill(2*nfft))).astype(np.int8)
         output = np.concatenate((len_binary, output))
-        #print_array(output.astype(np.int8))
     
     if level >= 2:
         coded_message = check.conv_encode(output[2*nfft:].astype(bool), cc1)
@@ -75,6 +74,7 @@ def WifiTransmitter(*args):
         output = np.concatenate((preamble, output))
         mod = comm.modulation.QAMModem(4)
         output = mod.modulate(output.astype(bool))
+        # print("modulation\n", output)
         
     if level >= 3:
         nsym = int(len(output)/nfft)
@@ -83,12 +83,13 @@ def WifiTransmitter(*args):
             output[i*nfft:(i+1)*nfft] = np.fft.ifft(symbol)
 
     if level >= 4:
+        #TODO: CHANGE BACK THE ZEROS TO RANDOM
+        #np.random.randint(1,1000)
         noise_pad_begin = np.zeros(np.random.randint(1,1000))
         noise_pad_begin_length = len(noise_pad_begin)
         noise_pad_end = np.zeros(np.random.randint(1,1000))
         output = np.concatenate((noise_pad_begin,output,noise_pad_end))
         output = comm.channels.awgn(output,snr)
-        #print_array(output)
         return noise_pad_begin_length, output, length
             
     return output
