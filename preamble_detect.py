@@ -10,6 +10,7 @@ n_preamble = preamble_complex.size
 '''
 This function returns the index with the highest probability of matching the preamble.
     -output: our bits
+    -n_output: how many bits there are in 'output'
 '''
 def find_preamble(output, n_output):
     index_preamble = 0
@@ -32,8 +33,6 @@ def calculate_preamble_match(output, i):
     i_preamble = 0
     matched = 0
     for i_output in range(i, i + n_preamble):
-        # print(output[i_output], preamble_complex[i_preamble])
-        # print("\n")
         if output[i_output] == preamble_complex[i_preamble]: matched += 1
         i_preamble += 1
 
