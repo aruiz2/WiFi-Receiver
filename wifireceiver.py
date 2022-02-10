@@ -54,8 +54,8 @@ def WifiReceiver(*args):
         i_preamble, n_preamble_complex = find_preamble(output, n_output)
         begin_zero_padding = i_preamble
 
-        '''Remove the preamble and initial zero padding'''
-        output = output[i_preamble + n_preamble_complex:]
+        '''Remove initial zero padding'''
+        output = output[i_preamble:]
 
     #OFDM Demod
     if level >= 3:
@@ -66,14 +66,16 @@ def WifiReceiver(*args):
 
     #Turbo Decoding
     if level >= 2:
-
+    
         '''Convert complex to bits'''
         mod = comm.modulation.QAMModem(4)
         output = mod.demodulate(output, "hard")
         generator_bits, n_generator_bits = [], 0
 
+        '''Remove the preamble'''
+        output = output[n_preamble:]
+
         'Get length of message and remove len_binary array'
-        
         length = tb.get_length_of_message(output)
         output = output[128:] #since len_binary is length of 128 bits
 
@@ -102,6 +104,12 @@ def WifiReceiver(*args):
             bits: [113, 127]
         '''
         Interleave = np.reshape(np.transpose(np.reshape(np.arange(1, 2*nfft+1, 1),[-1,4])),[-1,])
+        
+        #Get length if entered level is 1
+        if level == 1:
+            length = tb.get_length_of_message(output)
+            input_bits = output
+            input_bits = input_bits[128:] #since len_binary is length of 128 bits
         
         n = input_bits.size
         bits = np.zeros(n) #input bits = length array - length of len_binary

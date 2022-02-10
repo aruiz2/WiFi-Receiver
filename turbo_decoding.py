@@ -14,6 +14,7 @@ def get_output_generator_bits(output, n_output, generator_bits):
         l += 2
         r += 2
         n_generator_bits += 1
+    
     return generator_bits, n_generator_bits
 
 '''

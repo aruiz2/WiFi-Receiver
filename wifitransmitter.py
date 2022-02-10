@@ -71,22 +71,28 @@ def WifiTransmitter(*args):
         coded_message = check.conv_encode(output[2*nfft:].astype(bool), cc1)
         coded_message = coded_message[:-6]
         output = np.concatenate((output[:2*nfft],coded_message))
+        #print("transmitter output\n", output.astype(np.int8))
         output = np.concatenate((preamble, output))
+        #print("transmitter output demodulated:\n", output.astype(np.int8))
         mod = comm.modulation.QAMModem(4)
         output = mod.modulate(output.astype(bool))
+        # print("transmitter output modulated:\n", output)
         
     if level >= 3:
+        #print("output before odm is applied\n", output)
         nsym = int(len(output)/nfft)
         for i in range(nsym):
             symbol = output[i*nfft:(i+1)*nfft]
             output[i*nfft:(i+1)*nfft] = np.fft.ifft(symbol)
 
+        #print("output after ofdm is applied\n", output)
     if level >= 4:
-        x_begin = 3 #TODO: CHANGE TO RANDOM WHEN FIXED
-        x_end = 3 #TODO: CHANGE TO RANDOM WHEN FIXED
-        noise_pad_begin = np.zeros(np.random.randint(1,1000))
+        #TODO: DELETE THE X VARIABLE AND CHANGE IT BACK TO np.random.randint(1,1000)
+        x = 3
+        #TODO: DELETE THE X VARIABLE AND CHANGE IT BACK TO np.random.randint(1,1000)
+        noise_pad_begin = np.zeros(x)
         noise_pad_begin_length = len(noise_pad_begin)
-        noise_pad_end = np.zeros(np.random.randint(1,1000))
+        noise_pad_end = np.zeros(x)
         output = np.concatenate((noise_pad_begin,output,noise_pad_end))
         output = comm.channels.awgn(output,snr)
         return noise_pad_begin_length, output, length
