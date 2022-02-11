@@ -7,12 +7,23 @@ mod = comm.modulation.QAMModem(4)
 preamble_complex = np.fft.ifft(mod.modulate(preamble.astype(bool)))
 n_preamble_complex = preamble_complex.size
  
+
+def find_preamble(output, n_output):
+    max_correlation, max_correlation_index = np.NINF, -1
+    for i in range(n_output - n_preamble_complex):
+        curr_correlation_coeff_arr = np.correlate(output[i:i+n_preamble_complex], preamble_complex)
+        curr_correlation_coeff_arr_magnitude = np.abs(curr_correlation_coeff_arr)[0]
+        if curr_correlation_coeff_arr_magnitude > max_correlation:
+            max_correlation = curr_correlation_coeff_arr_magnitude
+            max_correlation_index = i
+
+    return max_correlation_index
 '''
 This function returns the index with the highest probability of matching the preamble.
     -output: our bits
     -n_output: how many bits there are in 'output'
 '''
-def find_preamble(output, n_output):
+def find_preamble_other(output, n_output):
     index_preamble = 0
     best_match = -1
     current_match = -1

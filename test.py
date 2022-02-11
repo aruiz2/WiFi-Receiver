@@ -8,8 +8,8 @@ reference_array = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 #Level4 test
 #3rd argument is SNR: 10log(S/N)
-noise_pad_begin, txsignal, length = wt.WifiTransmitter("gpsojgwporjwrgj pworgj powgjrpowgejrjegwpopoewfkokefokfe", 4, 30)
-print("\nnoise_pad_begin:", noise_pad_begin)
+noise_pad_begin, txsignal, length = wt.WifiTransmitter("hiogfrwhipoerwhr23u90-23749-324/.", 4, 2)
+print("\nnoise_pad_begin value:", noise_pad_begin)
 wr.WifiReceiver(txsignal, 4); print("\n")
 
 #Level3 test

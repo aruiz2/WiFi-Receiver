@@ -50,8 +50,7 @@ def WifiReceiver(*args):
     #Preamble Detection
     if level >= 4:
         n_output = len(output)
-
-        i_preamble, n_preamble_complex = find_preamble(output, n_output)
+        i_preamble = find_preamble(output, n_output)
         begin_zero_padding = i_preamble
 
         '''Remove initial zero padding'''

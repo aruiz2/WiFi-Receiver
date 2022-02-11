@@ -87,12 +87,9 @@ def WifiTransmitter(*args):
 
         #print("output after ofdm is applied\n", output)
     if level >= 4:
-        #TODO: DELETE THE X VARIABLE AND CHANGE IT BACK TO np.random.randint(1,1000)
-        x = 3
-        #TODO: DELETE THE X VARIABLE AND CHANGE IT BACK TO np.random.randint(1,1000)
-        noise_pad_begin = np.zeros(x)
+        noise_pad_begin = np.zeros(np.random.randint(1,1000))
         noise_pad_begin_length = len(noise_pad_begin)
-        noise_pad_end = np.zeros(x)
+        noise_pad_end = np.zeros(np.random.randint(1,1000))
         output = np.concatenate((noise_pad_begin,output,noise_pad_end))
         output = comm.channels.awgn(output,snr)
         return noise_pad_begin_length, output, length
