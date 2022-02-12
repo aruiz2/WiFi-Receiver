@@ -3,8 +3,8 @@ import numpy as np
 import commpy as comm
 
 preamble = np.array([1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1])
-mod = comm.modulation.QAMModem(4)
-preamble_complex = np.fft.ifft(mod.modulate(preamble.astype(bool)))
+mod_preamble = comm.modulation.QAMModem(4)
+preamble_complex = np.fft.ifft(mod_preamble.modulate(preamble.astype(bool)))
 n_preamble_complex = preamble_complex.size
  
 

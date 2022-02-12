@@ -127,7 +127,7 @@ def WifiReceiver(*args):
         bits_per_num = 8
         ascii_values = np.zeros((n_bits//bits_per_num,), dtype = int)
         ascii_values = restore_ascii_values(n_bits, bits_per_num, bits, ascii_values)
-        message = convert_ascii_values_to_message(ascii_values, message)
+        message = convert_ascii_values_to_message(ascii_values, message)[:length]
 
     print(begin_zero_padding , "," + message + ",", length)
     
